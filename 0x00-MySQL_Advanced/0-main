@@ -12,6 +12,6 @@ echo 'INSERT INTO users (email, name) VALUES ("bob@dylan.com", "Jean");' | mysql
 
 echo "SELECT * FROM users;" | mysql -uroot -p holberton
 
-id  email   name
-1   bob@dylan.com   Bob
-2   sylvie@dylan.com    Sylvie
+# id  email   name
+# 1   bob@dylan.com   Bob
+# 2   sylvie@dylan.com    Sylvie
