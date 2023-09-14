@@ -8,6 +8,7 @@ import pymongo
 
 
 def schools_by_topic(mongo_collection, topic):
+    '''Python function'''
     schools = []
 
     for i in mongo_collection.find({'topic': topic}):
