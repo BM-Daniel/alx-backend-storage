@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 '''
-0. Writing strings to Redis 
+0. Writing strings to Redis
 '''
 
 import redis
@@ -22,8 +22,9 @@ def call_history(method: Callable) -> Callable:
         data = method(self, *args, **kwargs)
         self._redis.rpush(outputs, str(data))
         return data
-    
+
     return wrapper
+
 
 def count_calls(method: Callable) -> Callable:
     '''Count calls functtion'''
@@ -33,16 +34,17 @@ def count_calls(method: Callable) -> Callable:
         '''Wrapper function'''
         self._redis.incr(key)
         return method(self, *args, **kwargs)
-    
+
     return wrapper
+
 
 class Cache:
     '''Cache class'''
     def __init__(self):
         '''
-        In the __init__ method, store an instance of the Redis client as a private
-        variable named _redis (using redis.Redis()) and flush the instance
-        using flushdb
+        In the __init__ method, store an instance of the Redis client as a
+        private variable named _redis (using redis.Redis()) and flush the
+        instance using flushdb
         '''
         self._redis = redis.Redis()
         self._redis.flushdb()
@@ -63,9 +65,9 @@ class Cache:
 
         if fn:
             return fn(data)
-        
+
         return data
-    
+
     def get_str(self, key: str) -> str:
         '''Get function'''
         data = self._redis.get(key)
