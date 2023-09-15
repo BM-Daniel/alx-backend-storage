@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 '''
-0. Writing strings to Redis
+Redis tasks
 '''
 
 import redis
@@ -13,68 +13,80 @@ from functools import wraps
 def call_history(method: Callable) -> Callable:
     '''Call history function'''
     key = method.__qualname__
-    inputs = key + ':inputs'
-    outputs = key + ':outputs'
+    inputs = key + ":inputs"
+    outputs = key + ":outputs"
 
-    def wrapper(self, *args, **kwargs):
-        '''Wrapper function'''
+    @wraps(method)
+    def wrapper(self, *args, **kwds):
+        """ wrapped function """
         self._redis.rpush(inputs, str(args))
-        data = method(self, *args, **kwargs)
+        data = method(self, *args, **kwds)
         self._redis.rpush(outputs, str(data))
         return data
-
     return wrapper
 
 
 def count_calls(method: Callable) -> Callable:
-    '''Count calls functtion'''
+    '''Count calls function'''
     key = method.__qualname__
 
-    def wrapper(self, *args, **kwargs):
-        '''Wrapper function'''
+    @wraps(method)
+    def wrapper(self, *args, **kwds):
+        """ wrapped function """
         self._redis.incr(key)
-        return method(self, *args, **kwargs)
-
+        return method(self, *args, **kwds)
     return wrapper
 
 
 class Cache:
-    '''Cache class'''
+    """ class """
     def __init__(self):
-        '''
-        In the __init__ method, store an instance of the Redis client as a
-        private variable named _redis (using redis.Redis()) and flush the
-        instance using flushdb
-        '''
+        '''Init function'''
         self._redis = redis.Redis()
         self._redis.flushdb()
 
+    @call_history
+    @count_calls
     def store(self, data: Union[str, bytes, int, float]) -> str:
-        '''
-        Create a store method that takes a data argument and returns a string.
-        The method should generate a random key (e.g. using uuid), store the
-        input data in Redis using the random key and return the key.
-        '''
+        '''Store function'''
         key = str(uuid.uuid4())
         self._redis.set(key, data)
+        return key
 
     def get(self, key: str, fn:
             Optional[Callable] = None) -> Union[str, bytes, int, float]:
         '''Get function'''
         data = self._redis.get(key)
-
         if fn:
             return fn(data)
-
         return data
 
     def get_str(self, key: str) -> str:
         '''Get function'''
         data = self._redis.get(key)
+        return data.decode("utf-8")
 
+    def get_int(self, key: str) -> int:
+        '''Get function'''
+        data = self._redis.get(key)
         try:
-            data: int(value.decode('utf-8'))
+            data = int(value.decode("utf-8"))
         except Exception:
             data = 0
-
         return data
+
+
+def replay(method: Callable):
+    '''Replay function'''
+    key = method.__qualname__
+    inputs = key + ":inputs"
+    outputs = key + ":outputs"
+    redis = method.__self__._redis
+    count = redis.get(key).decode("utf-8")
+    print("{} was called {} times:".format(key, count))
+    inputList = redis.lrange(inputs, 0, -1)
+    outputList = redis.lrange(outputs, 0, -1)
+    redis_zipped = list(zip(inputList, outputList))
+    for a, b in redis_zipped:
+        attr, data = a.decode("utf-8"), b.decode("utf-8")
+        print("{}(*{}) -> {}".format(key, attr, data))
