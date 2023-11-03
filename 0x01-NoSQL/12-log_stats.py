@@ -2,7 +2,7 @@
 
 '''
 Write a Python script that provides some stats about Nginx logs stored in
-MongoDB
+MongoDB:
 '''
 
 from pymongo import MongoClient
@@ -19,19 +19,20 @@ def log_stats(mongo_collection, option=None):
 
     if option:
         value = mongo_collection.count_documents(
-            {"method": {"$regex": option}}
-        )
+            {"method": {"$regex": option}})
+
         print(f"\tmethod {option}: {value}")
         return
 
-    results = mongo_collection.count_documents(items)
-    print(f"{results} logs")
-    print("Methods:")
+    result = mongo_collection.count_documents(items)
+
+    print(f"{result} logs")
+    print("methods:")
 
     for method in methods:
         log_stats(nginx_collection, method)
 
-    status_check = mongo_collection.count_documents({"paths": "/status"})
+    status_check = mongo_collection.count_documents({"path": "/status"})
     print(f"{status_check} status check")
 
 
